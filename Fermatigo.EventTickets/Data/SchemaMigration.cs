@@ -1,4 +1,4 @@
-using Fermatigo.EventTickets.Domain;
+﻿using Fermatigo.EventTickets.Domain;
 using FluentMigrator;
 using Nop.Data.Extensions;
 using Nop.Data.Migrations;
@@ -15,13 +15,15 @@ public class SchemaMigration : Migration
 {
     public override void Up()
     {
+        // Create/Alter se provedou až po Up(), kontroly Schema hned – sloupce se proto doplňují jen u tabulek, které už existovaly.
         if (!Schema.Table(nameof(FmEventTicket)).Exists())
             Create.TableFor<FmEventTicket>();
+        else if (!Schema.Table(nameof(FmEventTicket)).Column(nameof(FmEventTicket.EventId)).Exists())
+            Alter.Table(nameof(FmEventTicket)).AddColumn(nameof(FmEventTicket.EventId)).AsInt32().NotNullable().WithDefaultValue(0);
+
         if (!Schema.Table(nameof(FmEvent)).Exists())
             Create.TableFor<FmEvent>();
-        if (!Schema.Table(nameof(FmEventTicket)).Column(nameof(FmEventTicket.EventId)).Exists())
-            Alter.Table(nameof(FmEventTicket)).AddColumn(nameof(FmEventTicket.EventId)).AsInt32().NotNullable().WithDefaultValue(0);
-        if (!Schema.Table(nameof(FmEvent)).Column(nameof(FmEvent.VipProductIds)).Exists())
+        else if (!Schema.Table(nameof(FmEvent)).Column(nameof(FmEvent.VipProductIds)).Exists())
             Alter.Table(nameof(FmEvent)).AddColumn(nameof(FmEvent.VipProductIds)).AsString(1000).NotNullable().WithDefaultValue(string.Empty);
     }
 

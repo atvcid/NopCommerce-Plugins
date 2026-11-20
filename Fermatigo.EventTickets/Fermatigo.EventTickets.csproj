@@ -1,5 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <!-- vygenerovano tools/build-plugins-4.80.py pro nopCommerce 4.80 (.NET 9) -->
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <AssemblyName>Fermatigo.EventTickets</AssemblyName>
@@ -7,120 +6,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <!-- slozka s knihovnami nopCommerce 4.80 (obsah /app z instalace), zadej: dotnet build -p:NopLibs=/cesta -->
-    <NopLibs Condition="'$(NopLibs)' == ''">$(MSBuildThisFileDirectory)../nop-libs/4.80/app</NopLibs>
     <Authors>Tom Tomčo</Authors>
     <Copyright>Copyright © Tom Tomčo</Copyright>
-    <OutputPath>out\</OutputPath>
-    <OutDir>out\</OutDir>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <OutputPath>$(SolutionDir)\Presentation\Nop.Web\Plugins\Fermatigo.EventTickets\</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591;CS8618;CS8625;MSB3277;NU1701</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;CS8618;CS8625</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="AdvancedStringBuilder"><HintPath>$(NopLibs)/AdvancedStringBuilder.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="AutoMapper"><HintPath>$(NopLibs)/AutoMapper.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Autofac.Extensions.DependencyInjection"><HintPath>$(NopLibs)/Autofac.Extensions.DependencyInjection.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Autofac"><HintPath>$(NopLibs)/Autofac.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Azure.Core"><HintPath>$(NopLibs)/Azure.Core.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Azure.Extensions.AspNetCore.DataProtection.Blobs"><HintPath>$(NopLibs)/Azure.Extensions.AspNetCore.DataProtection.Blobs.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Azure.Extensions.AspNetCore.DataProtection.Keys"><HintPath>$(NopLibs)/Azure.Extensions.AspNetCore.DataProtection.Keys.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Azure.Identity"><HintPath>$(NopLibs)/Azure.Identity.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Azure.Security.KeyVault.Keys"><HintPath>$(NopLibs)/Azure.Security.KeyVault.Keys.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Azure.Storage.Blobs"><HintPath>$(NopLibs)/Azure.Storage.Blobs.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Azure.Storage.Common"><HintPath>$(NopLibs)/Azure.Storage.Common.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="BouncyCastle.Cryptography"><HintPath>$(NopLibs)/BouncyCastle.Cryptography.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="ClosedXML.Parser"><HintPath>$(NopLibs)/ClosedXML.Parser.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="ClosedXML"><HintPath>$(NopLibs)/ClosedXML.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="DocumentFormat.OpenXml.Framework"><HintPath>$(NopLibs)/DocumentFormat.OpenXml.Framework.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="DocumentFormat.OpenXml"><HintPath>$(NopLibs)/DocumentFormat.OpenXml.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="ExCSS"><HintPath>$(NopLibs)/ExCSS.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="ExcelNumberFormat"><HintPath>$(NopLibs)/ExcelNumberFormat.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FirebirdSql.Data.FirebirdClient"><HintPath>$(NopLibs)/FirebirdSql.Data.FirebirdClient.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Abstractions"><HintPath>$(NopLibs)/FluentMigrator.Abstractions.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Extensions.MySql"><HintPath>$(NopLibs)/FluentMigrator.Extensions.MySql.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Extensions.Oracle"><HintPath>$(NopLibs)/FluentMigrator.Extensions.Oracle.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Extensions.Postgres"><HintPath>$(NopLibs)/FluentMigrator.Extensions.Postgres.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Extensions.Snowflake"><HintPath>$(NopLibs)/FluentMigrator.Extensions.Snowflake.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Extensions.SqlServer"><HintPath>$(NopLibs)/FluentMigrator.Extensions.SqlServer.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner.Core"><HintPath>$(NopLibs)/FluentMigrator.Runner.Core.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner.Db2"><HintPath>$(NopLibs)/FluentMigrator.Runner.Db2.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner.Firebird"><HintPath>$(NopLibs)/FluentMigrator.Runner.Firebird.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner.Hana"><HintPath>$(NopLibs)/FluentMigrator.Runner.Hana.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner.MySql"><HintPath>$(NopLibs)/FluentMigrator.Runner.MySql.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner.Oracle"><HintPath>$(NopLibs)/FluentMigrator.Runner.Oracle.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner.Postgres"><HintPath>$(NopLibs)/FluentMigrator.Runner.Postgres.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner.Redshift"><HintPath>$(NopLibs)/FluentMigrator.Runner.Redshift.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner.SQLite"><HintPath>$(NopLibs)/FluentMigrator.Runner.SQLite.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner.Snowflake"><HintPath>$(NopLibs)/FluentMigrator.Runner.Snowflake.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner.SqlServer"><HintPath>$(NopLibs)/FluentMigrator.Runner.SqlServer.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator.Runner"><HintPath>$(NopLibs)/FluentMigrator.Runner.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentMigrator"><HintPath>$(NopLibs)/FluentMigrator.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentValidation.AspNetCore"><HintPath>$(NopLibs)/FluentValidation.AspNetCore.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentValidation.DependencyInjectionExtensions"><HintPath>$(NopLibs)/FluentValidation.DependencyInjectionExtensions.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="FluentValidation"><HintPath>$(NopLibs)/FluentValidation.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Google.Apis.Auth"><HintPath>$(NopLibs)/Google.Apis.Auth.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Google.Apis.Core"><HintPath>$(NopLibs)/Google.Apis.Core.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Google.Apis"><HintPath>$(NopLibs)/Google.Apis.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="HarfBuzzSharp"><HintPath>$(NopLibs)/HarfBuzzSharp.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Humanizer"><HintPath>$(NopLibs)/Humanizer.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="MailKit"><HintPath>$(NopLibs)/MailKit.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="MaxMind.Db"><HintPath>$(NopLibs)/MaxMind.Db.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="MaxMind.GeoIP2"><HintPath>$(NopLibs)/MaxMind.GeoIP2.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson"><HintPath>$(NopLibs)/Microsoft.AspNetCore.Mvc.NewtonsoftJson.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.Bcl.AsyncInterfaces"><HintPath>$(NopLibs)/Microsoft.Bcl.AsyncInterfaces.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.CodeAnalysis.CSharp"><HintPath>$(NopLibs)/Microsoft.CodeAnalysis.CSharp.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.CodeAnalysis.Razor"><HintPath>$(NopLibs)/Microsoft.CodeAnalysis.Razor.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.CodeAnalysis"><HintPath>$(NopLibs)/Microsoft.CodeAnalysis.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.Data.SqlClient"><HintPath>$(NopLibs)/Microsoft.Data.SqlClient.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.Identity.Client.Extensions.Msal"><HintPath>$(NopLibs)/Microsoft.Identity.Client.Extensions.Msal.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.Identity.Client"><HintPath>$(NopLibs)/Microsoft.Identity.Client.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.IdentityModel.Abstractions"><HintPath>$(NopLibs)/Microsoft.IdentityModel.Abstractions.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.IdentityModel.JsonWebTokens"><HintPath>$(NopLibs)/Microsoft.IdentityModel.JsonWebTokens.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.IdentityModel.Logging"><HintPath>$(NopLibs)/Microsoft.IdentityModel.Logging.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect"><HintPath>$(NopLibs)/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.IdentityModel.Protocols"><HintPath>$(NopLibs)/Microsoft.IdentityModel.Protocols.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.IdentityModel.Tokens"><HintPath>$(NopLibs)/Microsoft.IdentityModel.Tokens.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Microsoft.SqlServer.Server"><HintPath>$(NopLibs)/Microsoft.SqlServer.Server.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="MimeKit"><HintPath>$(NopLibs)/MimeKit.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="MySqlConnector"><HintPath>$(NopLibs)/MySqlConnector.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="NUglify"><HintPath>$(NopLibs)/NUglify.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Newtonsoft.Json.Bson"><HintPath>$(NopLibs)/Newtonsoft.Json.Bson.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Newtonsoft.Json"><HintPath>$(NopLibs)/Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Nito.AsyncEx.Coordination"><HintPath>$(NopLibs)/Nito.AsyncEx.Coordination.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Nito.AsyncEx.Tasks"><HintPath>$(NopLibs)/Nito.AsyncEx.Tasks.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Nito.Collections.Deque"><HintPath>$(NopLibs)/Nito.Collections.Deque.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Nito.Disposables"><HintPath>$(NopLibs)/Nito.Disposables.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Nop.Core"><HintPath>$(NopLibs)/Nop.Core.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Nop.Data"><HintPath>$(NopLibs)/Nop.Data.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Nop.Services"><HintPath>$(NopLibs)/Nop.Services.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Nop.Web.Framework"><HintPath>$(NopLibs)/Nop.Web.Framework.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Nop.Web"><HintPath>$(NopLibs)/Nop.Web.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Npgsql"><HintPath>$(NopLibs)/Npgsql.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Pipelines.Sockets.Unofficial"><HintPath>$(NopLibs)/Pipelines.Sockets.Unofficial.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="QuestPDF"><HintPath>$(NopLibs)/QuestPDF.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="RBush"><HintPath>$(NopLibs)/RBush.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="ShimSkiaSharp"><HintPath>$(NopLibs)/ShimSkiaSharp.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="SixLabors.Fonts"><HintPath>$(NopLibs)/SixLabors.Fonts.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="SkiaSharp.HarfBuzz"><HintPath>$(NopLibs)/SkiaSharp.HarfBuzz.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="SkiaSharp"><HintPath>$(NopLibs)/SkiaSharp.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="StackExchange.Redis"><HintPath>$(NopLibs)/StackExchange.Redis.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Svg.Custom"><HintPath>$(NopLibs)/Svg.Custom.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Svg.Model"><HintPath>$(NopLibs)/Svg.Model.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Svg.Skia"><HintPath>$(NopLibs)/Svg.Skia.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="WebMarkupMin.AspNet.Common"><HintPath>$(NopLibs)/WebMarkupMin.AspNet.Common.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="WebMarkupMin.AspNetCoreLatest"><HintPath>$(NopLibs)/WebMarkupMin.AspNetCoreLatest.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="WebMarkupMin.Core"><HintPath>$(NopLibs)/WebMarkupMin.Core.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="WebMarkupMin.NUglify"><HintPath>$(NopLibs)/WebMarkupMin.NUglify.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="WebOptimizer.Core"><HintPath>$(NopLibs)/WebOptimizer.Core.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="linq2db"><HintPath>$(NopLibs)/linq2db.dll</HintPath><Private>false</Private></Reference>
+    <ProjectReference Include="$(SolutionDir)\Libraries\Nop.Core\Nop.Core.csproj" />
+    <ProjectReference Include="$(SolutionDir)\Libraries\Nop.Data\Nop.Data.csproj" />
+    <ProjectReference Include="$(SolutionDir)\Libraries\Nop.Services\Nop.Services.csproj" />
+    <ProjectReference Include="$(SolutionDir)\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="QRCoder" Version="1.4.3" />
@@ -132,4 +31,7 @@
     <Content Include="Views\**\*.cshtml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Content\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <Target Name="NopTarget" AfterTargets="Build">
+    <MSBuild Projects="@(ClearPluginAssemblies)" Properties="PluginPath=$(OutDir)" Targets="NopClear" />
+  </Target>
 </Project>
