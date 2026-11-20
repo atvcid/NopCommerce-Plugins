@@ -1,0 +1,657 @@
+@model ConfigurationModel
+
+@{
+    Layout = "_ConfigurePlugin";
+}
+
+<style>
+    .fm-tk-stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 4px 0 6px; }
+    .fm-tk-stat { min-width: 150px; padding: 12px 16px; border-radius: 8px; background: #f4f6fa; }
+    .fm-tk-stat strong { display: block; font-size: 26px; line-height: 1.1; color: #001B54; }
+    .fm-tk-table td, .fm-tk-table th { vertical-align: middle !important; font-size: 13px; }
+    .fm-tk-table form { display: inline; }
+    .fm-tk-code { font-family: monospace; white-space: nowrap; }
+    .fm-tk-badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .fm-tk-ok { background: #e6f2c8; color: #3d5a00; }
+    .fm-tk-used { background: #dbe4f5; color: #001B54; }
+    .fm-tk-bad { background: #f8d7da; color: #842029; }
+</style>
+
+<div class="cards-group">
+
+    <div class="card card-default">
+        <div class="card-header"><i class="fas fa-ticket-alt"></i> Přehled</div>
+        <div class="card-body">
+            <div class="fm-tk-stats">
+                <div class="fm-tk-stat">Platné vstupenky<strong>@Model.Total</strong></div>
+                <div class="fm-tk-stat">Odbaveno<strong>@Model.CheckedIn</strong></div>
+                <div class="fm-tk-stat">Zbývá odbavit<strong>@(Model.Total - Model.CheckedIn)</strong></div>
+                <div class="fm-tk-stat">Zneplatněno<strong>@Model.Canceled</strong></div>
+            </div>
+            <p class="text-muted mb-0" style="font-size: 13px;">
+                Vstupenky se vytvoří samy, jakmile je objednávka se vstupenkou zaplacená. Ke každému kusu vznikne jedna vstupenka
+                s vlastním QR kódem a zákazník dostane e-mail s PDF. Odbavuje obsluha přihlášená v e-shopu s rolí
+                <strong>@EventTicketsDefaults.CheckInRoleName</strong> nebo administrátor: QR kód načte fotoaparátem mobilu
+                a na stránce, která se otevře, klikne na Odbavit.
+                @if (Model.CheckInRoleId > 0)
+                {
+                    <a href="@Url.Content("~/Admin/Customer/List")">Roli přidělíte u zákazníka</a>
+                }
+            </p>
+        </div>
+    </div>
+
+    <div class="card card-default">
+        <div class="card-header"><i class="fas fa-calendar-alt"></i> Akce</div>
+        <div class="card-body">
+            @if (Model.Events.Count == 0)
+            {
+                <p class="text-muted">Zatím tu není žádná akce. Založte první akci a přiřaďte jí produkt vstupenky.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered fm-tk-table">
+                        <thead>
+                            <tr>
+                                <th>Akce</th>
+                                <th>Produkty vstupenek</th>
+                                <th>Platné</th>
+                                <th>Odbaveno</th>
+                                <th>Zneplatněno</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var e in Model.Events)
+                            {
+                                <tr>
+                                    <td><strong>@e.Name</strong>@if (!string.IsNullOrEmpty(e.When)) {<br /><span class="text-muted">@e.When</span>}</td>
+                                    <td>
+                                        @if (e.Products.Count == 0)
+                                        {
+                                            <span class="text-danger">žádný produkt</span>
+                                        }
+                                        @foreach (var p in e.Products)
+                                        {
+                                            <div>@p</div>
+                                        }
+                                    </td>
+                                    <td>@e.Total</td>
+                                    <td>@e.CheckedIn</td>
+                                    <td>@e.Canceled</td>
+                                    <td style="white-space: nowrap;">
+                                        <a class="btn btn-xs btn-default" href="@Url.Action("Configure", "FmTickets", new { editEvent = e.Id })">Upravit</a>
+                                        <a class="btn btn-xs btn-default" href="@Url.Action("Configure", "FmTickets", new { eventId = e.Id })">Vstupenky</a>
+                                        <form asp-controller="FmTickets" asp-action="EventDelete" method="post" style="display: inline;"
+                                              data-name="@e.Name" data-tickets="@e.TicketCount" onsubmit="return fmTkDeleteEvent(this);">
+                                            <input type="hidden" name="id" value="@e.Id" />
+                                            <input type="hidden" name="confirmName" value="" />
+                                            <button type="submit" class="btn btn-xs btn-danger">Smazat</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @if (Model.EditEvent == null)
+            {
+                <a class="btn btn-primary" href="@Url.Action("Configure", "FmTickets", new { editEvent = 0 })"><i class="fas fa-plus"></i> Přidat akci</a>
+            }
+            else
+            {
+                var ev = Model.EditEvent;
+                <h4 style="font-size: 15px; margin: 6px 0 12px;">@(ev.Id > 0 ? "Upravit akci" : "Nová akce")</h4>
+                <form asp-controller="FmTickets" asp-action="EventSave" method="post">
+                    <input type="hidden" name="Id" value="@ev.Id" />
+                    <div class="form-group row">
+                        <div class="col-md-3"><label class="col-form-label" for="ev-name">Název akce</label></div>
+                        <div class="col-md-9"><input id="ev-name" name="Name" value="@ev.Name" class="form-control" placeholder="Firemní večer Fermatigo World" /></div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3"><label class="col-form-label" for="ev-date">Datum a čas</label></div>
+                        <div class="col-md-9"><input id="ev-date" name="EventDate" value="@ev.EventDate" class="form-control" placeholder="14. 3. 2027 od 18:00" /></div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3"><label class="col-form-label" for="ev-place">Místo konání</label></div>
+                        <div class="col-md-9"><input id="ev-place" name="EventPlace" value="@ev.EventPlace" class="form-control" placeholder="Hotel, adresa" /></div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3"><label class="col-form-label" for="ev-note">Poznámka na vstupence</label></div>
+                        <div class="col-md-9"><textarea id="ev-note" name="EventNote" rows="3" class="form-control" placeholder="Například dress code nebo parkování. Nepovinné.">@ev.EventNote</textarea></div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3"><label class="col-form-label" for="ev-products">ID produktů vstupenek</label></div>
+                        <div class="col-md-9">
+                            <input id="ev-products" name="ProductIds" value="@ev.ProductIds" class="form-control" placeholder="například 245" />
+                            <div class="text-muted mt-2" style="font-size: 12px;">
+                                ID produktu najdete v adrese jeho úpravy v administraci (Product/Edit/<strong>245</strong>).
+                                Více produktů (například různé druhy vstupného) oddělte čárkou. Jeden produkt může patřit jen jedné akci.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3"><label class="col-form-label" for="ev-vip">ID produktů VIP vstupenek</label></div>
+                        <div class="col-md-9">
+                            <input id="ev-vip" name="VipProductIds" value="@ev.VipProductIds" class="form-control" placeholder="například 246, nepovinné" />
+                            <div class="text-muted mt-2" style="font-size: 12px;">
+                                Produkty VIP vstupného této akce. Obsluha po načtení QR kódu uvidí velký zlatý pruh <strong>VIP</strong>,
+                                VIP je i v PDF, na stránce zákazníka a v seznamu vstupenek. Sem patří jen VIP produkty, běžné vstupné do pole výše.
+                            </div>
+                            @foreach (var name in ev.ProductNames)
+                            {
+                                <div style="font-size: 13px;"><i class="fas fa-check text-success"></i> @name</div>
+                            }
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-9 offset-md-3">
+                            <button type="submit" class="btn btn-primary">Uložit akci</button>
+                            <a class="btn btn-default" href="@Url.Action("Configure", "FmTickets")">Zrušit</a>
+                        </div>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+
+    <dialog id="fm-tk-del" style="max-width: 520px; width: 92%; border: 0; border-radius: 10px; padding: 22px; box-shadow: 0 10px 40px rgba(0,0,0,.25);">
+        <h4 id="fm-tk-del-title" style="margin: 0 0 10px; font-size: 18px; color: #842029;"></h4>
+        <p id="fm-tk-del-text" style="font-size: 13px; white-space: pre-line;"></p>
+        <div id="fm-tk-del-namebox" style="margin-bottom: 12px;">
+            <label for="fm-tk-del-name" style="font-size: 13px;">Pro potvrzení napište přesný název akce</label>
+            <input id="fm-tk-del-name" class="form-control" autocomplete="off" />
+        </div>
+        <div id="fm-tk-del-reasonbox">
+            <label for="fm-tk-del-reason" style="font-size: 13px;">Důvod smazání (povinné, uloží se do poznámky objednávky)</label>
+            <textarea id="fm-tk-del-reason" rows="3" maxlength="1000" class="form-control" placeholder="Například: duplicitní objednávka, zákazník vrátil vstupenku osobně"></textarea>
+        </div>
+        <div id="fm-tk-del-error" class="text-danger" style="font-size: 13px; margin-top: 8px;"></div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+            <button type="button" class="btn btn-default" id="fm-tk-del-cancel">Zrušit</button>
+            <button type="button" class="btn btn-danger" id="fm-tk-del-ok">Smazat nevratně</button>
+        </div>
+    </dialog>
+    <script>
+        // Potvrzovací dialog mazání: u vstupenky a u akce se vstupenkami povinný důvod,
+        // u akce se vstupenkami navíc opsání názvu. Obojí kontroluje i server.
+        (function () {
+            var dlg = document.getElementById('fm-tk-del');
+            var nameBox = document.getElementById('fm-tk-del-namebox'), nameIn = document.getElementById('fm-tk-del-name');
+            var reasonBox = document.getElementById('fm-tk-del-reasonbox'), reasonIn = document.getElementById('fm-tk-del-reason');
+            var err = document.getElementById('fm-tk-del-error');
+            var pending = null;
+
+            function open(opts) {
+                pending = opts;
+                document.getElementById('fm-tk-del-title').textContent = opts.title;
+                document.getElementById('fm-tk-del-text').textContent = opts.text;
+                nameBox.style.display = opts.name ? '' : 'none';
+                reasonBox.style.display = opts.reason ? '' : 'none';
+                nameIn.value = ''; reasonIn.value = ''; err.textContent = '';
+                dlg.showModal();
+                (opts.name ? nameIn : opts.reason ? reasonIn : document.getElementById('fm-tk-del-ok')).focus();
+            }
+
+            document.getElementById('fm-tk-del-cancel').addEventListener('click', function () { dlg.close(); pending = null; });
+            document.getElementById('fm-tk-del-ok').addEventListener('click', function () {
+                if (!pending) return;
+                if (pending.name && nameIn.value.trim().toLowerCase() !== pending.name.trim().toLowerCase()) {
+                    err.textContent = 'Název nesouhlasí s názvem akce.'; nameIn.focus(); return;
+                }
+                if (pending.reason && reasonIn.value.trim().length < 3) {
+                    err.textContent = 'Napište důvod smazání.'; reasonIn.focus(); return;
+                }
+                var form = pending.form;
+                function put(n, v) {
+                    var i = form.querySelector('input[name="' + n + '"]');
+                    if (!i) { i = document.createElement('input'); i.type = 'hidden'; i.name = n; form.appendChild(i); }
+                    i.value = v;
+                }
+                if (pending.op) put('op', pending.op);
+                if (pending.name) put('confirmName', nameIn.value.trim());
+                if (pending.reason) put('reason', reasonIn.value.trim());
+                dlg.close();
+                form.submit();
+            });
+
+            window.fmTkDeleteEvent = function (form) {
+                var name = form.dataset.name, count = parseInt(form.dataset.tickets, 10) || 0;
+                open(count === 0
+                    ? { form: form, title: 'Smazat akci „' + name + '“?', text: 'Akce nemá žádné vstupenky.' }
+                    : {
+                        form: form, name: name, reason: true,
+                        title: 'Smazat akci „' + name + '“ i se vstupenkami?',
+                        text: 'Akce má vstupenek: ' + count + '. Smazáním se NEVRATNĚ smaže akce i všechny její vstupenky. ' +
+                              'Jejich QR kódy u vstupu přestanou platit a zákazníci o tom nedostanou žádnou zprávu.\n\n' +
+                              'Do poznámek objednávek se zapíše, které vstupenky byly smazané, kdo je smazal a důvod.'
+                    });
+                return false;
+            };
+
+            window.fmTkDeleteTicket = function (btn) {
+                open({
+                    form: btn.form, op: 'delete', reason: true,
+                    title: 'Smazat vstupenku ' + btn.dataset.label + '?',
+                    text: 'Smazání je NEVRATNÉ. QR kód u vstupu přestane platit a zákazník o tom nedostane zprávu.\n\n' +
+                          'Když chcete vstupenku jen zablokovat s možností vrátit, použijte Zneplatnit.'
+                });
+            };
+        })();
+    </script>
+
+    <div class="card card-default">
+        <div class="card-header"><i class="fas fa-cog"></i> Nastavení</div>
+        <div class="card-body">
+            <form asp-controller="FmTickets" asp-action="Configure" method="post" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+                <label style="margin: 0;"><input asp-for="SendEmail" type="checkbox" /> Po zaplacení poslat zákazníkovi e-mail se vstupenkami v PDF</label>
+                <button type="submit" class="btn btn-primary btn-sm">Uložit</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card card-default">
+        <div class="card-header"><i class="fas fa-receipt"></i> Objednávka</div>
+        <div class="card-body">
+            <form asp-controller="FmTickets" asp-action="Order" method="post" class="form-inline" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                <input name="orderNumber" class="form-control" placeholder="Číslo objednávky" style="max-width: 220px;" required />
+                <button type="submit" name="op" value="generate" class="btn btn-success">Vytvořit chybějící vstupenky</button>
+                <button type="submit" name="op" value="resend" class="btn btn-default">Poslat e-mail se vstupenkami znovu</button>
+                <input name="subject" class="form-control" placeholder="Jiný předmět e-mailu (nepovinné)" style="max-width: 360px;" />
+            </form>
+            <div class="text-muted mt-2" style="font-size: 12px;">
+                Vytvoření se hodí pro objednávky zaplacené dřív, než byl plugin nastavený. Opakované kliknutí vstupenky nezdvojí.
+                Předmět se použije jen při opětovném odeslání, prázdný znamená výchozí předmět.
+            </div>
+
+            <hr />
+            <h4 style="font-size: 15px; margin: 0 0 8px;">Poslat vstupenky znovu všem</h4>
+            <form asp-controller="FmTickets" asp-action="ResendAll" method="post" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;"
+                  onsubmit="var s=this.querySelector('select[name=eventId]');var a=s&&s.value!=='0'?' na akci '+s.options[s.selectedIndex].text:'';return confirm('Poslat e-mail se vstupenkami znovu všem zákazníkům s platnými vstupenkami'+a+'? Každá objednávka dostane jeden e-mail.');">
+                @if (Model.Events.Count > 1)
+                {
+                    <select name="eventId" class="form-control" style="max-width: 260px;">
+                        <option value="0">Všechny akce</option>
+                        @foreach (var e in Model.Events)
+                        {
+                            <option value="@e.Id">@e.Name</option>
+                        }
+                    </select>
+                }
+                <input name="subject" class="form-control" style="max-width: 520px;"
+                       placeholder="Předmět, například Připomínka: Vaše vstupenky na {akce}" />
+                <button type="submit" class="btn btn-warning"><i class="fas fa-paper-plane"></i> Poslat znovu všem</button>
+            </form>
+            <div class="text-muted mt-2" style="font-size: 12px;">
+                Každá objednávka s aspoň jednou platnou vstupenkou dostane jeden e-mail se všemi svými platnými vstupenkami v PDF.
+                Zneplatněné vstupenky a stornované objednávky se přeskočí. Hodí se třeba jako připomínka před akcí nebo po změně kódů.
+                Prázdný předmět znamená výchozí „Vstupenky: název akce, objednávka číslo“. Do vlastního předmětu můžete vložit
+                <code>{akce}</code> (název akce) a <code>{objednavka}</code> (číslo objednávky).
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-default">
+        <div class="card-header"><i class="fas fa-cloud-upload-alt"></i> Záloha do Google Tabulky</div>
+        <div class="card-body">
+            <p style="font-size: 13px;">
+                E-shop posílá seznam všech vstupenek do Google Tabulky: objednávka, jméno, e-mail, kód, stav a čas odbavení,
+                stejně jako export do Excelu. Odesílá se v nastaveném intervalu, pokud se něco změnilo (nová vstupenka, odbavení,
+                zneplatnění), a jednou denně i beze změny. Kdyby e-shop nešel, vstupenky jde zkontrolovat podle kódu v tabulce.
+                List <strong>Archiv vstupenek</strong> uchovává každou vstupenku, která kdy v e-shopu byla, a nic se z něj nemaže.
+                Když by vstupenky v e-shopu zmizely, obnovíte je tlačítkem <strong>Obnovit z Google Tabulky</strong> s původními kódy.
+            </p>
+            <div class="fm-tk-stats" style="margin-bottom: 14px;">
+                <div class="fm-tk-stat">Stav zálohy
+                    @if (string.IsNullOrEmpty(Model.GoogleSheetUrl))
+                    {
+                        <strong style="font-size: 18px;">vypnutá</strong>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.BackupLastError))
+                    {
+                        <strong style="font-size: 18px; color: #842029;">chyba</strong>
+                    }
+                    else
+                    {
+                        <strong style="font-size: 18px; color: #3d5a00;">funguje</strong>
+                    }
+                </div>
+                <div class="fm-tk-stat">Poslední záloha<strong style="font-size: 18px;">@(Model.BackupLastSuccess ?? "zatím žádná")</strong></div>
+                <div class="fm-tk-stat">Interval<strong style="font-size: 18px;">@EventTicketsDefaults.BackupIntervalLabel(Model.BackupIntervalMinutes)</strong></div>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.BackupLastError))
+            {
+                <div class="alert alert-danger" style="font-size: 13px;">@Model.BackupLastError</div>
+            }
+            @if (!string.IsNullOrEmpty(Model.GoogleSheetUrl) && !Model.BackupTaskEnabled)
+            {
+                <div class="alert alert-warning" style="font-size: 13px;">
+                    Plánovaná úloha zálohy je vypnutá nebo ještě neběží. Uložte adresu znovu a restartujte aplikaci,
+                    případně ji zapněte v Systém → Plánované úlohy.
+                </div>
+            }
+            <form asp-controller="FmTickets" asp-action="Backup" method="post" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                <input name="googleSheetUrl" value="@Model.GoogleSheetUrl" class="form-control" style="max-width: 640px;"
+                       placeholder="https://script.google.com/macros/s/.../exec" />
+                <input name="googleSheetSecret" value="@Model.GoogleSheetSecret" class="form-control" style="max-width: 420px; font-family: monospace;"
+                       title="Tajný klíč, stejný jako v řádku const SECRET ve skriptu" placeholder="Tajný klíč" autocomplete="off" />
+                <button type="submit" name="op" value="save" class="btn btn-primary">Uložit a vyzkoušet</button>
+                @if (!string.IsNullOrEmpty(Model.GoogleSheetUrl))
+                {
+                    <button type="submit" name="op" value="now" class="btn btn-default"><i class="fas fa-sync"></i> Zálohovat teď</button>
+                    <a class="btn btn-warning" href="@Url.Action("Configure", "FmTickets", new { restore = true })#fm-tk-restore"><i class="fas fa-undo"></i> Obnovit z Google Tabulky</a>
+                }
+            </form>
+            <form asp-controller="FmTickets" asp-action="Backup" method="post" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px;">
+                <label for="fm-tk-interval" style="margin: 0; font-weight: 600;">Interval zálohy</label>
+                <select id="fm-tk-interval" name="backupInterval" class="form-control" style="max-width: 220px;">
+                    @foreach (var i in EventTicketsDefaults.BackupIntervals)
+                    {
+                        <option value="@i.Minutes" selected="@(i.Minutes == Model.BackupIntervalMinutes)">@i.Label</option>
+                    }
+                </select>
+                <button type="submit" name="op" value="interval" class="btn btn-default"><i class="far fa-clock"></i> Uložit interval</button>
+                <span class="text-muted" style="font-size: 12px;">Interval se zapíše i do Systém → Plánované úlohy, nopCommerce ho převezme po restartu aplikace. Záloha se pošle jen při změně (a jednou denně i bez ní). Tlačítko Zálohovat teď funguje vždy.</span>
+            </form>
+            <div class="text-muted" style="font-size: 12px; margin-top: 6px;">
+                Tajný klíč musí být stejný jako v řádku <code>const SECRET</code> ve skriptu v Google Tabulce. Po nové instalaci e-shopu
+                ho sem opište ze skriptu, pak půjdou vstupenky obnovit. Klíč nikomu neposílejte.
+            </div>
+
+            @if (Model.Restore != null)
+            {
+                var r = Model.Restore;
+                <div id="fm-tk-restore" style="margin-top: 18px; padding: 16px; border: 2px solid #f0ad4e; border-radius: 8px;">
+                    <h4 style="font-size: 16px; margin: 0 0 10px;"><i class="fas fa-undo"></i> Obnova vstupenek z Google Tabulky</h4>
+                    @if (!string.IsNullOrEmpty(r.Error))
+                    {
+                        <div class="alert alert-danger" style="font-size: 13px;">@r.Error</div>
+                    }
+                    else if (r.Rows.Count == 0)
+                    {
+                        <div class="alert alert-success" style="font-size: 13px;">
+                            V archivu je vstupenek: @r.InArchive. Všechny jsou v e-shopu, není co obnovovat.
+                        </div>
+                    }
+                    else
+                    {
+                        <p style="font-size: 13px;">
+                            V archivu je vstupenek: <strong>@r.InArchive</strong>, v e-shopu z nich je <strong>@r.InShop</strong>,
+                            chybí <strong>@r.Rows.Count</strong>. Zaškrtnuté se obnoví s původním kódem, stavem odbavení a zneplatnění,
+                            jejich QR kódy budou znovu platit. Vstupenky, které někdo smazal ručně v administraci, jsou označené
+                            a předem nezaškrtnuté. Existující vstupenky se nikdy nepřepíšou.
+                        </p>
+                        <form asp-controller="FmTickets" asp-action="Restore" method="post"
+                              onsubmit="var n=this.querySelectorAll('input[name=codes]:checked').length;if(!n){alert('Zaškrtněte vstupenky k obnovení.');return false;}return confirm('Obnovit vstupenky (' + n + ') z Google Tabulky?');">
+                            <div class="table-responsive">
+                                <table class="table table-bordered fm-tk-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 30px;"><input type="checkbox" onclick="var c=this.checked;this.closest('table').querySelectorAll('input[name=codes]').forEach(function(x){x.checked=c;});" /></th>
+                                            <th>Akce</th>
+                                            <th>Objednávka</th>
+                                            <th>Č.</th>
+                                            <th>Jméno a e-mail</th>
+                                            <th>Kód</th>
+                                            <th>Stav v archivu</th>
+                                            <th>Naposledy v e-shopu</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var row in r.Rows)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @if (row.ManuallyDeleted)
+                                                    {
+                                                        <input type="checkbox" name="codes" value="@row.Code" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="checkbox" name="codes" value="@row.Code" checked />
+                                                    }
+                                                </td>
+                                                <td>@row.EventName</td>
+                                                <td>
+                                                    @row.OrderNumber
+                                                    @if (!row.OrderExists)
+                                                    {
+                                                        <div class="text-danger" style="font-size: 12px;">objednávka v e-shopu chybí</div>
+                                                    }
+                                                </td>
+                                                <td>@row.Number</td>
+                                                <td>@row.HolderName<br /><span class="text-muted">@row.HolderEmail</span></td>
+                                                <td class="fm-tk-code">@row.CodeFormatted</td>
+                                                <td>
+                                                    @row.State
+                                                    @if (row.ManuallyDeleted)
+                                                    {
+                                                        <div><span class="fm-tk-badge fm-tk-bad">smazaná ručně</span></div>
+                                                    }
+                                                </td>
+                                                <td style="font-size: 12px;">@row.LastSeen</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button type="submit" class="btn btn-warning"><i class="fas fa-undo"></i> Obnovit vybrané</button>
+                            <a class="btn btn-default" href="@Url.Action("Configure", "FmTickets")">Zavřít</a>
+                        </form>
+                    }
+                </div>
+            }
+
+            <details style="margin-top: 16px;" @(string.IsNullOrEmpty(Model.GoogleSheetUrl) ? "open" : "")>
+                <summary style="cursor: pointer; font-weight: 600;">Jak zálohu nastavit (jednou, asi 5 minut)</summary>
+                <ol style="font-size: 13px; margin-top: 10px; padding-left: 20px;">
+                    <li>Na Google Disku vytvořte novou Google Tabulku, například „Záloha vstupenek“.</li>
+                    <li>V tabulce otevřete <strong>Rozšíření → Apps Script</strong>. Smažte, co tam je, vložte skript níže
+                        (tlačítko Kopírovat skript) a uložte.</li>
+                    <li>Vpravo nahoře <strong>Nasadit → Nové nasazení</strong>, typ <strong>Webová aplikace</strong>.
+                        Spustit jako: <strong>Já</strong>. Kdo má přístup: <strong>Kdokoli</strong>.
+                        Klikněte na Nasadit a povolte přístup ke svému účtu Google.</li>
+                    <li>Zkopírujte <strong>adresu webové aplikace</strong> (končí na /exec), vložte ji do pole výše
+                        a klikněte na Uložit a vyzkoušet. V tabulce se objeví listy Vstupenky, Archiv vstupenek, Akce a Info.</li>
+                </ol>
+                <p class="text-muted" style="font-size: 12px;">
+                    Přístup „Kdokoli“ je nutný, aby e-shop mohl do skriptu posílat data. Zapsat do tabulky ale umí jen ten,
+                    kdo zná tajný klíč, který je ve skriptu. Tabulka sama zůstává soukromá ve Vašem Google účtu.
+                    Skript nikomu neposílejte. List Vstupenky ukazuje aktuální stav e-shopu, list Archiv vstupenek každou vstupenku,
+                    která kdy v e-shopu byla (nic se z něj nemaže), list Akce údaje akcí a list Info přehled.
+                    Po aktualizaci pluginu na verzi s obnovou vložte skript do Apps Script znovu a nasaďte novou verzi
+                    (Nasadit → Spravovat nasazení → upravit → Nová verze), adresa zůstane stejná.
+                </p>
+                <textarea id="fm-tk-script" readonly rows="12" class="form-control" style="font-family: monospace; font-size: 12px;">@Model.AppsScript</textarea>
+                <button type="button" class="btn btn-default btn-sm" style="margin-top: 8px;"
+                        onclick="var t=document.getElementById('fm-tk-script');t.select();navigator.clipboard.writeText(t.value).then(function(){alert('Skript je zkopírovaný.');});">
+                    <i class="fas fa-copy"></i> Kopírovat skript
+                </button>
+            </details>
+        </div>
+    </div>
+
+    <div class="card card-default">
+        <div class="card-header"><i class="fas fa-list"></i> Vstupenky</div>
+        <div class="card-body">
+            <form asp-controller="FmTickets" asp-action="Configure" method="get" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;">
+                @if (Model.Events.Count > 1)
+                {
+                    <select name="eventId" class="form-control" style="max-width: 240px;" onchange="this.form.submit()">
+                        <option value="0">Všechny akce</option>
+                        @foreach (var e in Model.Events)
+                        {
+                            if (e.Id == Model.EventId)
+                            {
+                                <option value="@e.Id" selected>@e.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@e.Id">@e.Name</option>
+                            }
+                        }
+                    </select>
+                }
+                <input name="q" value="@Model.Search" class="form-control" placeholder="Jméno, e-mail, číslo objednávky nebo kód" style="max-width: 360px;" />
+                <button type="submit" class="btn btn-primary">Hledat</button>
+                @if (!string.IsNullOrEmpty(Model.Search) || Model.EventId > 0)
+                {
+                    <a class="btn btn-default" href="@Url.Action("Configure", "FmTickets")">Zrušit hledání</a>
+                }
+                <a class="btn btn-default" href="@Url.Action("Export", "FmTickets", new { eventId = Model.EventId })" style="margin-left: auto;"><i class="fas fa-file-excel"></i> Export do Excelu</a>
+            </form>
+
+            @if (Model.Tickets.Count == 0)
+            {
+                <p class="text-muted">Zatím tu nejsou žádné vstupenky.</p>
+            }
+            else
+            {
+                <form id="fm-tk-selected" asp-controller="FmTickets" asp-action="ResendSelected" method="post"
+                      style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px;"
+                      onsubmit="var n=document.querySelectorAll('.fm-tk-pick:checked').length;if(!n){alert('Zaškrtněte vstupenky, kterým chcete e-mail poslat znovu.');return false;}return confirm('Poslat e-mail se vstupenkami znovu k vybraným vstupenkám (' + n + ')? Každá objednávka dostane jeden e-mail se všemi svými platnými vstupenkami.');">
+                    <input type="hidden" name="q" value="@Model.Search" />
+                    <input type="hidden" name="eventId" value="@Model.EventId" />
+                    <input type="hidden" name="page" value="@Model.Page" />
+                    <input name="subject" class="form-control" style="max-width: 420px;"
+                           placeholder="Jiný předmět e-mailu (nepovinné), lze {akce} a {objednavka}" />
+                    <button type="submit" class="btn btn-warning"><i class="fas fa-paper-plane"></i> Poslat znovu vybraným (<span id="fm-tk-count">0</span>)</button>
+                </form>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover fm-tk-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30px;"><input type="checkbox" id="fm-tk-all" title="Vybrat všechny na této stránce" /></th>
+                                @if (Model.Events.Count > 1)
+                                {
+                                    <th>Akce</th>
+                                }
+                                <th>Objednávka</th>
+                                <th>Č.</th>
+                                <th>Jméno a e-mail</th>
+                                <th>Kód</th>
+                                <th>Stav</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in Model.Tickets)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (!t.Canceled)
+                                        {
+                                            <input type="checkbox" class="fm-tk-pick" name="ids" value="@t.Id" form="fm-tk-selected" />
+                                        }
+                                    </td>
+                                    @if (Model.Events.Count > 1)
+                                    {
+                                        <td>@t.EventName</td>
+                                    }
+                                    <td><a href="@Url.Content("~/Admin/Order/Edit/" + t.OrderId)">@t.OrderNumber</a></td>
+                                    <td>@t.Number</td>
+                                    <td>@t.HolderName<br /><span class="text-muted">@t.HolderEmail</span></td>
+                                    <td>
+                                        @if (t.IsVip)
+                                        {
+                                            <span class="fm-tk-badge" style="background: #e8b923; color: #001B54;">VIP</span>
+                                        }
+                                        <a class="fm-tk-code" href="@t.Url" target="_blank" rel="noopener">@t.Code</a>
+                                    </td>
+                                    <td>
+                                        @if (t.OrderCanceled)
+                                        {
+                                            <span class="fm-tk-badge fm-tk-bad">storno</span>
+                                            <div class="text-muted" style="font-size: 12px;">objednávka stornovaná</div>
+                                        }
+                                        else if (t.Canceled)
+                                        {
+                                            <span class="fm-tk-badge fm-tk-bad">neplatná</span>
+                                        }
+                                        else if (t.CheckedIn != null)
+                                        {
+                                            <span class="fm-tk-badge fm-tk-used">odbavená</span>
+                                            <div class="text-muted" style="font-size: 12px;">@t.CheckedIn, @t.CheckedInBy</div>
+                                        }
+                                        else
+                                        {
+                                            <span class="fm-tk-badge fm-tk-ok">platná</span>
+                                        }
+                                    </td>
+                                    <td style="white-space: nowrap;">
+                                        <form asp-controller="FmTickets" asp-action="Ticket" method="post">
+                                            <input type="hidden" name="id" value="@t.Id" />
+                                            <input type="hidden" name="q" value="@Model.Search" />
+                                            <input type="hidden" name="eventId" value="@Model.EventId" />
+                                            <input type="hidden" name="page" value="@Model.Page" />
+                                            @if (!t.Canceled && t.CheckedIn == null)
+                                            {
+                                                <button type="submit" name="op" value="checkin" class="btn btn-xs btn-success">Odbavit</button>
+                                            }
+                                            @if (t.CheckedIn != null)
+                                            {
+                                                <button type="submit" name="op" value="undo" class="btn btn-xs btn-default"
+                                                        onclick="return confirm('Zrušit odbavení? Vstupenka bude znovu platit pro vstup.');">Zrušit odbavení</button>
+                                            }
+                                            @if (!t.Canceled)
+                                            {
+                                                <button type="submit" name="op" value="cancel" class="btn btn-xs btn-danger"
+                                                        onclick="return confirm('Zneplatnit vstupenku? U vstupu ji pak nepůjde odbavit.');">Zneplatnit</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" name="op" value="restore" class="btn btn-xs btn-default">Obnovit</button>
+                                            }
+                                            <button type="button" class="btn btn-xs btn-danger" title="Smazat vstupenku nevratně"
+                                                    data-label="@t.Number (@t.Code, objednávka @t.OrderNumber)"
+                                                    onclick="fmTkDeleteTicket(this)"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-muted" style="font-size: 12px; margin-bottom: 10px;">
+                    Zaškrtněte vstupenky a klikněte na Poslat znovu vybraným. E-mail jde za každou objednávku jen jednou
+                    a obsahuje všechny její platné vstupenky. Zneplatněné vstupenky vybrat nejde.
+                </div>
+                <script>
+                    (function () {
+                        var all = document.getElementById('fm-tk-all');
+                        var picks = document.querySelectorAll('.fm-tk-pick');
+                        var count = document.getElementById('fm-tk-count');
+                        function update() {
+                            var n = document.querySelectorAll('.fm-tk-pick:checked').length;
+                            count.textContent = n;
+                            all.checked = n > 0 && n === picks.length;
+                        }
+                        all.addEventListener('change', function () {
+                            picks.forEach(function (p) { p.checked = all.checked; });
+                            update();
+                        });
+                        picks.forEach(function (p) { p.addEventListener('change', update); });
+                    })();
+                </script>
+
+                @if (Model.PageCount > 1)
+                {
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        @if (Model.Page > 0)
+                        {
+                            <a class="btn btn-default btn-sm" href="@Url.Action("Configure", "FmTickets", new { q = Model.Search, eventId = Model.EventId, page = Model.Page - 1 })">Předchozí</a>
+                        }
+                        <span>Strana @(Model.Page + 1) z @Model.PageCount, celkem @Model.Found</span>
+                        @if (Model.Page + 1 < Model.PageCount)
+                        {
+                            <a class="btn btn-default btn-sm" href="@Url.Action("Configure", "FmTickets", new { q = Model.Search, eventId = Model.EventId, page = Model.Page + 1 })">Další</a>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

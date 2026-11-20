@@ -1,0 +1,13 @@
+{
+  "Group": "Fermatigo",
+  "FriendlyName": "Fermatigo vstupenky s QR kódem",
+  "SystemName": "Fermatigo.EventTickets",
+  "Version": "1.11.0",
+  "SupportedVersions": [
+    "4.80"
+  ],
+  "Author": "Tom Tomčo",
+  "DisplayOrder": 1,
+  "FileName": "Fermatigo.EventTickets.dll",
+  "Description": "Prodej vstupenek na akce. Po zaplacení objednávky vytvoří ke každé vstupence vlastní QR kód, pošle zákazníkovi PDF ke stažení a tisku a obsluha u vstupu vstupenky odbavuje načtením QR kódu v mobilu. Seznam vstupenek se průběžně zálohuje do Google Tabulky a jde z ní obnovit."
+}

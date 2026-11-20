@@ -1,0 +1,104 @@
+@model OrderTicketsModel
+@{
+    Layout = null;
+    var valid = Model.Tickets.Count(t => !t.Canceled);
+    var productNames = Model.Tickets.Select(t => t.ProductName).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct().ToList();
+}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Vstupenky: @Model.Event.EventName</title>
+    @await Html.PartialAsync("~/Plugins/Fermatigo.EventTickets/Views/Public/_Style.cshtml")
+    <style>
+        .fm-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 8px; }
+        .fm-ticket { margin-top: 16px; padding: 20px; border-radius: 16px; background: #fff; box-shadow: 0 6px 16px rgba(0,27,84,.06); text-align: center; }
+        .fm-ticket h2 { margin: 0 0 2px; font-size: 19px; }
+        .fm-ticket img { display: block; width: 100%; max-width: 300px; height: auto; margin: 12px auto; image-rendering: pixelated; }
+        .fm-code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 17px; letter-spacing: .06em; }
+        .fm-ticket--off { opacity: .55; }
+        .fm-tag { display: inline-block; margin-top: 6px; padding: 3px 12px; border-radius: 999px; background: #f8d7da; color: #842029; font-size: 13px; font-weight: 600; }
+        .fm-tag--used { background: #dbe4f5; color: #001B54; }
+    </style>
+</head>
+<body>
+    <div class="fm-wrap">
+        <div class="fm-head">
+            @if (!string.IsNullOrEmpty(Model.Event.StoreName))
+            {
+                <small>@Model.Event.StoreName</small>
+            }
+            <h1>@Model.Event.EventName</h1>
+            @if (!string.IsNullOrEmpty(Model.Event.EventDate) || !string.IsNullOrEmpty(Model.Event.EventPlace))
+            {
+                <p>@string.Join(", ", new[] { Model.Event.EventDate, Model.Event.EventPlace }.Where(x => !string.IsNullOrEmpty(x)))</p>
+            }
+        </div>
+
+        @if (Model.Tickets.Count == 0)
+        {
+            <p style="margin-top: 20px;">Vstupenky k objednávce @Model.OrderNumber ještě nejsou připravené. Vytvoří se hned po zaplacení objednávky a pošleme Vám je e-mailem.</p>
+        }
+        else
+        {
+            @if (productNames.Count > 0)
+            {
+                <h2 style="margin: 20px 0 0; font-size: 21px;">@string.Join(", ", productNames)</h2>
+            }
+            <p style="margin: 8px 0 0;">
+                Každá vstupenka má vlastní QR kód a platí pro jeden vstup. U vstupu ji ukažte vytištěnou nebo v mobilu.
+            </p>
+            @if (valid > 0)
+            {
+                <div class="fm-actions">
+                    <a class="fm-btn" href="@Url.Content("~/vstupenky/" + Model.OrderGuid.ToString("D") + "/pdf")">Stáhnout vstupenky v PDF</a>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.Event.EventNote))
+            {
+                <p class="fm-muted">@Model.Event.EventNote</p>
+            }
+
+            @foreach (var t in Model.Tickets)
+            {
+                <div class="fm-ticket @(t.Canceled ? "fm-ticket--off" : "")">
+                    @if (Model.MultiEvent)
+                    {
+                        <div style="font-weight: 700; font-size: 17px;">@t.EventName</div>
+                        @if (!string.IsNullOrEmpty(t.EventWhen))
+                        {
+                            <div class="fm-muted">@t.EventWhen</div>
+                        }
+                    }
+                    <h2>@(t.IsVip ? "VIP vstupenka" : "Vstupenka")</h2>
+                    <div class="fm-muted">@t.HolderName</div>
+                    @if (Model.MultiEvent && !string.IsNullOrEmpty(t.EventNote))
+                    {
+                        <div class="fm-muted">@t.EventNote</div>
+                    }
+                    @if (t.Canceled)
+                    {
+                        <span class="fm-tag">Vstupenka není platná</span>
+                    }
+                    else
+                    {
+                        <img src="@Url.Content("~/vstupenky/" + Model.OrderGuid.ToString("D") + "/qr/" + t.Code + ".png")" alt="QR kód vstupenky @t.Number" width="300" height="300" />
+                        <div class="fm-code">@t.CodeFormatted</div>
+                        @if (t.CheckedIn)
+                        {
+                            <span class="fm-tag fm-tag--used">Už odbavená u vstupu</span>
+                        }
+                        <div class="fm-actions" style="justify-content: center;">
+                            <a class="fm-btn fm-btn--ghost" href="@Url.Content("~/vstupenky/" + Model.OrderGuid.ToString("D") + "/qr/" + t.Code + ".png?download=true")" download>Stáhnout QR kód do telefonu</a>
+                        </div>
+                    }
+                </div>
+            }
+
+            <p class="fm-muted" style="margin-top: 22px;">Vstupenky nikomu neposílejte ani je nezveřejňujte. Kdo má QR kód, může s ním vstoupit.</p>
+        }
+    </div>
+</body>
+</html>

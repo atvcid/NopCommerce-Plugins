@@ -1,0 +1,142 @@
+@model ScanModel
+@{
+    Layout = null;
+    string tone, title, detail = string.Empty;
+    var canCheckIn = false;
+
+    if (!Model.IsStaff)
+    {
+        tone = "info"; title = "Vstupenka";
+    }
+    else if (!Model.Found)
+    {
+        tone = "bad"; title = "Neznámá vstupenka"; detail = "Tento kód v e-shopu neexistuje. Vstupenka může být padělaná nebo poškozená.";
+    }
+    else if (Model.Canceled)
+    {
+        tone = "bad"; title = "Neplatná vstupenka"; detail = "Vstupenka byla zneplatněná (storno nebo vrácení peněz). Nepouštět.";
+    }
+    else if (Model.Result == CheckInStatus.CheckedIn)
+    {
+        tone = "ok"; title = "Odbaveno"; detail = "Vstupenka je platná a právě byla odbavená. Pustit dovnitř.";
+    }
+    else if (Model.CheckedInAt != null)
+    {
+        tone = "bad"; title = "Už použitá"; detail = $"Vstupenka už byla odbavená {Model.CheckedInAt}" + (string.IsNullOrEmpty(Model.CheckedInBy) ? "." : $" ({Model.CheckedInBy}).");
+    }
+    else
+    {
+        tone = "ready"; title = "Platná vstupenka"; detail = "Zkontrolujte údaje a klikněte na Odbavit."; canCheckIn = true;
+    }
+}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>@title</title>
+    @await Html.PartialAsync("~/Plugins/Fermatigo.EventTickets/Views/Public/_Style.cshtml")
+    <style>
+        .fm-state { margin-top: 16px; padding: 26px 22px; border-radius: 18px; color: #fff; text-align: center; }
+        .fm-state h1 { margin: 0; font-size: 34px; line-height: 1.15; }
+        .fm-state p { margin: 8px 0 0; font-size: 17px; }
+        .fm-state--ok { background: #2e7d32; }
+        .fm-state--ready { background: #001B54; }
+        .fm-state--bad { background: #c62828; }
+        .fm-state--info { background: #001B54; }
+        .fm-icon { font-size: 54px; line-height: 1; }
+        .fm-card { margin-top: 16px; padding: 18px 20px; border-radius: 16px; background: #fff; box-shadow: 0 6px 16px rgba(0,27,84,.06); }
+        .fm-card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; }
+        .fm-card dt { color: #4a5a7a; }
+        .fm-card dd { margin: 0; font-weight: 600; word-break: break-word; }
+        .fm-big { width: 100%; min-height: 64px; margin-top: 16px; font-size: 22px; }
+        .fm-warn { color: #c62828; }
+        .fm-vip { margin-top: 16px; padding: 18px 16px; border-radius: 18px; background: linear-gradient(135deg, #f7d460, #e8b923 55%, #c99a0e);
+                  color: #001B54; text-align: center; box-shadow: 0 6px 18px rgba(201,154,14,.35); }
+        .fm-vip strong { display: block; font-size: 52px; line-height: 1; letter-spacing: .08em; }
+        .fm-vip span { display: block; margin-top: 6px; font-size: 16px; font-weight: 700; }
+        .fm-state.fm-state--vip { outline: 6px solid #e8b923; outline-offset: -6px; }
+    </style>
+</head>
+<body>
+    <div class="fm-wrap">
+        <div class="fm-head">
+            @if (!string.IsNullOrEmpty(Model.Event.StoreName))
+            {
+                <small>@Model.Event.StoreName</small>
+            }
+            <h1>@Model.Event.EventName</h1>
+            @if (!string.IsNullOrEmpty(Model.Event.EventDate) || !string.IsNullOrEmpty(Model.Event.EventPlace))
+            {
+                <p>@string.Join(", ", new[] { Model.Event.EventDate, Model.Event.EventPlace }.Where(x => !string.IsNullOrEmpty(x)))</p>
+            }
+        </div>
+
+        @if (Model.IsStaff && Model.Found && Model.IsVip)
+        {
+            <div class="fm-vip" role="status">
+                <strong>★ VIP ★</strong>
+                <span>VIP vstupenka</span>
+            </div>
+        }
+
+        <div class="fm-state fm-state--@tone @(Model.IsStaff && Model.Found && Model.IsVip ? "fm-state--vip" : "")">
+            <div class="fm-icon">@(tone == "ok" ? "✓" : tone == "bad" ? "✕" : "")</div>
+            <h1>@title</h1>
+            @if (!string.IsNullOrEmpty(detail))
+            {
+                <p>@detail</p>
+            }
+        </div>
+
+        @if (!Model.IsStaff)
+        {
+            <div class="fm-card">
+                <p style="margin-top: 0;">Tuto vstupenku ukažte u vstupu. Platnost ověří obsluha načtením QR kódu.</p>
+                <p class="fm-muted" style="margin-bottom: 0;">
+                    Jste obsluha u vstupu?
+                    @if (Model.IsRegistered)
+                    {
+                        <span>Váš účet nemá oprávnění odbavovat vstupenky. Požádejte správce e-shopu o roli „@EventTicketsDefaults.CheckInRoleName“.</span>
+                    }
+                    else
+                    {
+                        <a href="@Model.LoginUrl">Přihlaste se</a><span> a QR kód načtěte znovu.</span>
+                    }
+                </p>
+            </div>
+        }
+        else if (Model.Found)
+        {
+            <div class="fm-card">
+                <dl>
+                    <dt>Jméno</dt><dd>@(string.IsNullOrEmpty(Model.HolderName) ? "neuvedeno" : Model.HolderName)</dd>
+                    <dt>Vstupenka</dt><dd>@if (Model.IsVip) {<span style="display:inline-block;margin-right:6px;padding:1px 8px;border-radius:999px;background:#e8b923;color:#001B54;font-weight:800;">VIP</span>}@(string.IsNullOrEmpty(Model.ProductName) ? "Vstupenka" : Model.ProductName)</dd>
+                    <dt>Objednávka</dt><dd>@Model.OrderNumber</dd>
+                    <dt>Platba</dt><dd class="@(Model.PaymentOk ? "" : "fm-warn")">@Model.PaymentStatus, @Model.OrderStatus</dd>
+                    <dt>E-mail</dt><dd>@Model.HolderEmail</dd>
+                    <dt>Kód</dt><dd>@EventTicketService.FormatCode(Model.Code)</dd>
+                </dl>
+                @if (!Model.PaymentOk && !Model.Canceled)
+                {
+                    <p class="fm-warn" style="margin-bottom: 0;">Pozor, objednávka teď není vedená jako zaplacená. Ověřte to před vpuštěním.</p>
+                }
+            </div>
+
+            @if (canCheckIn)
+            {
+                <form method="post" action="@Url.Content("~/vstupenka/" + Model.Code)">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="fm-btn fm-big">Odbavit</button>
+                </form>
+            }
+        }
+
+        @if (Model.IsStaff)
+        {
+            <p class="fm-muted" style="margin-top: 18px; text-align: center;">Přihlášen: @Model.StaffName. Další vstupenku načtěte fotoaparátem.</p>
+        }
+    </div>
+</body>
+</html>
