@@ -8,6 +8,16 @@ Pluginy pro nopCommerce 4.80, autor Tom Tomčo.
 
 Úplný popis, nastavení a changelog jsou v [README pluginu](Fermatigo.EventTickets/README.md).
 
+## Instalace hotového pluginu
+
+Ve složce [instalace](instalace/) je hotový ZIP aktuální verze, sestavený pro nopCommerce 4.80:
+[Fermatigo.EventTickets-4.80-1.11.0.zip](instalace/Fermatigo.EventTickets-4.80-1.11.0.zip).
+
+1. V administraci Konfigurace → Místní pluginy → Nahrát plugin nebo motiv, vybrat ZIP.
+2. U pluginu kliknout na Instalovat (při aktualizaci tento krok odpadá) a restartovat aplikaci.
+
+Aktualizace vstupenky ani nastavení nemaže.
+
 ## Sestavení
 
 Potřebujete .NET SDK 9 a knihovny nopCommerce 4.80 (obsah složky `/app` z instalace e-shopu).
@@ -30,4 +40,4 @@ sestavovacího nástroje autora).
 
 ## Changelog repozitáře
 
-- 2026-11-20: Fermatigo.EventTickets 1.11.0
+- 2026-11-20: Fermatigo.EventTickets 1.11.0, přidán instalační ZIP
